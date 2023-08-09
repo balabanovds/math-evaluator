@@ -1,19 +1,21 @@
 import 'package:MathEvaluator/stack.dart';
 import 'package:test/test.dart';
+import 'run.dart';
 
-class _TestCaseLastElementsUntil<T> {
+class _TestCaseLastElementsUntil<T> implements Runnable {
+  _TestCaseLastElementsUntil(this.name, this.existingStack, this.want, this.f);
+
   final String name;
   final List<T> existingStack;
   final List<T> want;
   final bool Function(T) f;
 
-  _TestCaseLastElementsUntil(this.name, this.existingStack, this.want, this.f);
-
-  run() {
+  @override
+  void run() {
     test('get last elements $name', () {
-      Stack<T> stack = Stack.withValues(existingStack);
+      final Stack<T> stack = Stack<T>.withValues(existingStack);
 
-      List<T> got = stack.lastElementsUntil(f);
+      final List<T> got = stack.lastElementsUntil(f);
       expect(got, equals(want));
 
       // Check that underlying stack did not changed
@@ -22,17 +24,18 @@ class _TestCaseLastElementsUntil<T> {
   }
 }
 
-class _TestCasePushMany<T> {
+class _TestCasePushMany<T> implements Runnable {
+  _TestCasePushMany(this.name, this.existingStack, this.incoming, this.want);
+
   final String name;
   final List<T> existingStack;
   final List<T> incoming;
   final List<T> want;
 
-  _TestCasePushMany(this.name, this.existingStack, this.incoming, this.want);
-
-  run() {
+  @override
+  void run() {
     test('push many elements $name', () {
-      Stack<T> stack = Stack.withValues(existingStack);
+      final Stack<T> stack = Stack<T>.withValues(existingStack);
 
       stack.pushMany(incoming);
       expect(stack.stack, equals(want));
@@ -40,21 +43,22 @@ class _TestCasePushMany<T> {
   }
 }
 
-class _TestCasePopLastElementsUntil<T> {
+class _TestCasePopLastElementsUntil<T> implements Runnable {
+  _TestCasePopLastElementsUntil(
+      this.name, this.existingStack, this.want, this.f, this.wantStack);
+
   final String name;
   final List<T> existingStack;
   final List<T> want;
   final List<T> wantStack;
   final bool Function(T) f;
 
-  _TestCasePopLastElementsUntil(
-      this.name, this.existingStack, this.want, this.f, this.wantStack);
-
-  run() {
+  @override
+  void run() {
     test('pop many elements $name', () {
-      Stack<T> stack = Stack.withValues(existingStack);
+      final Stack<T> stack = Stack<T>.withValues(existingStack);
 
-      var got = stack.popLastElementsUntil(f);
+      final List<T> got = stack.popLastElementsUntil(f);
       expect(got, equals(want));
 
       expect(stack.stack, equals(wantStack));
@@ -64,23 +68,29 @@ class _TestCasePopLastElementsUntil<T> {
 
 void main() {
   group('Stack', () {
-    [
-      _TestCaseLastElementsUntil(
-          "1,2,3", [3, 4, 5, 3, 2, 1], [1, 2, 3], (i) => i <= 3),
-      _TestCaseLastElementsUntil(
-          "1,1,1", [1, 1, 2, 1, 1, 1], [1, 1, 1], (i) => i <= 1),
-    ].forEach((test) => test.run());
+    final List<Runnable> runnables = List<Runnable>.empty(growable: true);
 
-    [
-      _TestCasePushMany('1,2,3', [5, 5, 5], [1, 2, 3], [5, 5, 5, 1, 2, 3]),
-      _TestCasePushMany('add to empty', [], [7, 7, 7], [7, 7, 7])
-    ].forEach((test) => test.run());
+    runnables.addAll(<_TestCaseLastElementsUntil<int>>[
+      _TestCaseLastElementsUntil<int>(
+          '1,2,3', <int>[3, 4, 5, 3, 2, 1], <int>[1, 2, 3], (int i) => i <= 3),
+      _TestCaseLastElementsUntil<int>(
+          '1,1,1', <int>[1, 1, 2, 1, 1, 1], <int>[1, 1, 1], (int i) => i <= 1),
+    ]);
 
-    [
-      _TestCasePopLastElementsUntil(
-          '1,2,3', [3, 4, 5, 3, 2, 1], [1, 2, 3], (i) => i <= 3, [3, 4, 5]),
-      _TestCasePopLastElementsUntil(
-          'pour stack', [1, 2, 2], [1, 2, 2], (i) => i < 3, []),
-    ].forEach((test) => test.run());
+    runnables.addAll(<_TestCasePushMany<int>>[
+      _TestCasePushMany<int>(
+          '1,2,3', <int>[5, 5, 5], <int>[1, 2, 3], <int>[5, 5, 5, 1, 2, 3]),
+      _TestCasePushMany<int>(
+          'add to empty', <int>[], <int>[7, 7, 7], <int>[7, 7, 7])
+    ]);
+
+    runnables.addAll(<_TestCasePopLastElementsUntil<int>>[
+      _TestCasePopLastElementsUntil<int>('1,2,3', <int>[3, 4, 5, 3, 2, 1],
+          <int>[1, 2, 3], (int i) => i <= 3, <int>[3, 4, 5]),
+      _TestCasePopLastElementsUntil<int>('pour stack', <int>[1, 2, 2],
+          <int>[2, 2, 1], (int i) => i < 3, <int>[]),
+    ]);
+
+    run(runnables);
   });
 }
