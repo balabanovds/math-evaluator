@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:MathEvaluator/stack.dart';
 import 'package:test/test.dart';
 
@@ -46,10 +44,11 @@ class _TestCasePopLastElementsUntil<T> {
   final String name;
   final List<T> existingStack;
   final List<T> want;
+  final List<T> wantStack;
   final bool Function(T) f;
 
   _TestCasePopLastElementsUntil(
-      this.name, this.existingStack, this.want, this.f);
+      this.name, this.existingStack, this.want, this.f, this.wantStack);
 
   run() {
     test('pop many elements $name', () {
@@ -57,6 +56,8 @@ class _TestCasePopLastElementsUntil<T> {
 
       var got = stack.popLastElementsUntil(f);
       expect(got, equals(want));
+
+      expect(stack.stack, equals(wantStack));
     });
   }
 }
@@ -77,7 +78,9 @@ void main() {
 
     [
       _TestCasePopLastElementsUntil(
-          '1,2,3', [3, 4, 5, 3, 2, 1], [1, 2, 3], (i) => i <= 3),
+          '1,2,3', [3, 4, 5, 3, 2, 1], [1, 2, 3], (i) => i <= 3, [3, 4, 5]),
+      _TestCasePopLastElementsUntil(
+          'pour stack', [1, 2, 2], [1, 2, 2], (i) => i < 3, []),
     ].forEach((test) => test.run());
   });
 }
