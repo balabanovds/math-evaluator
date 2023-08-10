@@ -1,5 +1,6 @@
 import 'package:MathEvaluator/operand.dart';
 import 'package:MathEvaluator/operator.dart';
+import 'package:MathEvaluator/stack.dart';
 import 'package:MathEvaluator/token.dart';
 
 class PostfixNotation {
@@ -7,31 +8,31 @@ class PostfixNotation {
 
   PostfixNotation(this.tokens);
 
-  List<dynamic> prepare(Map<String, double> variables) {
-    List<Operator> stack = List.empty(growable: true);
-    List<dynamic> out = List.empty(growable: true);
+  List<Object> prepare(Map<String, double> variables) {
+    Stack<Operator> operators = Stack();
+    Stack<Object> out = Stack();
 
     Token pprev;
     Token prev;
     Token cur;
 
+    double Function(Token) takeValue = (Token t) {
+      if (t.type == TokenType.value) {
+        return double.parse(t.value);
+      }
+
+      if (t.type == TokenType.variable) {
+        if (!variables.containsKey(t.value)) {
+          throw Exception('variable ${t.value} not provided');
+        }
+        return variables[t.value]!;
+      }
+
+      throw Exception('wrong token type ${t.type}');
+    };
+
     for (var i = 0; i < tokens.length; i++) {
       cur = tokens[i];
-
-      double Function() takeValue = () {
-        if (cur.type == TokenType.value) {
-          return double.parse(cur.value);
-        }
-
-        if (cur.type == TokenType.variable) {
-          if (!variables.containsKey(cur.value)) {
-            throw Exception('variable ${cur.value} not provided');
-          }
-          return variables[cur.value]!;
-        }
-
-        throw Exception('wrong token type ${cur.type}');
-      };
 
       // Take first argument in expression.
       if (i == 0) {
@@ -40,10 +41,10 @@ class PostfixNotation {
         }
 
         if (cur.isOperand()) {
-          out.add(Operand(takeValue(), false));
+          out.push(Operand(takeValue(cur), false));
         } else {
           // If it is operand we put in stack.
-          stack.add(Operator(cur.type));
+          operators.push(Operator(cur.type));
         }
 
         continue;
@@ -59,14 +60,14 @@ class PostfixNotation {
       // Обрабатываем унарный оператор.
       if (i > 1 && prev.type == TokenType.sub && cur.isOperand()) {
         if (i == 1) {
-          out.add(Operand(takeValue(), true));
+          out.push(Operand(takeValue(cur), true));
         } else {
           pprev = tokens[i - 2];
 
           if (pprev.type != TokenType.rbr &&
               pprev.type != TokenType.value &&
               pprev.type != TokenType.variable) {
-            out.add(Operand(takeValue(), true));
+            out.push(Operand(takeValue(cur), true));
           }
         }
 
@@ -77,7 +78,11 @@ class PostfixNotation {
         Если при разборе строки нам встретилось число, то помещаем его в выходную строку
       */
       if (cur.isOperand()) {
-        out.add(Operand(takeValue(), false));
+        out.push(Operand(takeValue(cur), false));
+
+        if (i == tokens.length - 1) {
+          out.pushMany(operators.popAll());
+        }
         continue;
       }
 
@@ -86,29 +91,30 @@ class PostfixNotation {
       /*
         Если в стеке пусто, или нам попалась открывающая скобка — помещаем оператор в стек
       */
-      if (stack.length == 0 || cur.type == TokenType.lbr) {
-        stack.add(currentOperator);
+      if (operators.length == 0 || cur.type == TokenType.lbr) {
+        operators.push(currentOperator);
+        continue;
       }
 
       /*
-        Если нам попалась не скобка, то выталкиваем из стека, в выходную строку, 
+        Если строка закончилась — выталкиваем все операторы из стека в строку вывода
+      */
+      if (i == tokens.length - 1) {
+        out.pushMany(operators.popAll());
+      }
+
+      /*
+        Если нам попалась не скобка, а любой другой оператор, то выталкиваем из стека, в выходную строку, 
         операторы с бОльшим, или равным приоритетом. 
         Если, при выталкивании из стека, нам попался оператор с мЕньшим приоритетом — останавливаемся.
         Добавляем оператор на вершину стека.
        */
       if (cur.type != TokenType.lbr && cur.type != TokenType.rbr) {
-        List<Operator> reversedStack = List.from(stack.reversed);
-        while (reversedStack.length > 0) {
-          var last = reversedStack.last;
-          if (last.priority() < currentOperator.priority()) {
-            break;
-          }
-          reversedStack.removeLast();
-          out.add(last);
-        }
-
-        stack = List.from(reversedStack.reversed);
-        stack.add(currentOperator);
+        List<Operator> popped = operators.popLastElementsMatch(
+            (o) => o.priority() < currentOperator.priority());
+        out.pushMany(popped);
+        operators.push(currentOperator);
+        continue;
       }
 
       /*
@@ -116,19 +122,13 @@ class PostfixNotation {
         все операторы до первой открывающей скобки. Открывающую скобку из стека удаляем.
        */
       if (cur.type == TokenType.rbr) {
-        List<Operator> reversedStack = List.from(stack.reversed);
-        while (reversedStack.length > 0) {
-          var last = reversedStack.removeLast();
-          if (last.isRbracket()) {
-            break;
-          }
-          out.add(last);
-        }
-
-        stack = List.from(reversedStack);
+        List<Operator> popped =
+            operators.popLastElementsUnless((o) => o.isRbracket());
+        operators.pop();
+        out.pushMany(popped);
       }
     }
 
-    return out;
+    return out.stack;
   }
 }

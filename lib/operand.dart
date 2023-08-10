@@ -7,4 +7,9 @@ class Operand {
   double value() {
     return _isUnary ? 0.0 - _value : _value;
   }
+
+  @override
+  String toString() {
+    return _isUnary ? '-$_value' : '$_value';
+  }
 }

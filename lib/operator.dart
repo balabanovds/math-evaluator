@@ -59,6 +59,26 @@ class Operator {
         throw Exception('failed to parse operator ${typ.toString()}');
     }
   }
+
+  @override
+  String toString() {
+    switch (type) {
+      case _OperatorType._add:
+        return '+';
+      case _OperatorType._sub:
+        return '-';
+      case _OperatorType._mul:
+        return '*';
+      case _OperatorType._div:
+        return '/';
+      case _OperatorType._lbr:
+        return '(';
+      case _OperatorType._rbr:
+        return ')';
+      default:
+        return '';
+    }
+  }
 }
 
 enum _OperatorType {
