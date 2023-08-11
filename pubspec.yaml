@@ -1,0 +1,11 @@
+name: MathEvaluator
+
+environment:
+  sdk: "^3.0.0"
+
+dev_dependencies:
+  test:
+
+linter:
+  rules:
+    - hash_and_equals
