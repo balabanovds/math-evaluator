@@ -1,11 +1,11 @@
 class Token {
+  Token(String s) {
+    type = _parseType(s);
+    value = s;
+  }
+
   late TokenType type;
   late String value;
-
-  Token(String s) {
-    this.type = _parseType(s);
-    this.value = s;
-  }
 
   @override
   bool operator ==(Object other) {
@@ -59,26 +59,26 @@ class Token {
 
   TokenType _parseType(String s) {
     switch (s) {
-      case "+":
+      case '+':
         return TokenType.add;
-      case "-":
+      case '-':
         return TokenType.sub;
-      case "*":
+      case '*':
         return TokenType.mul;
-      case "/":
+      case '/':
         return TokenType.div;
-      case "(":
+      case '(':
         return TokenType.lbr;
-      case ")":
+      case ')':
         return TokenType.rbr;
     }
 
-    RegExp alpha = RegExp(r'[a-zA-Z]+');
+    final RegExp alpha = RegExp(r'[a-zA-Z]+');
     if (alpha.hasMatch(s)) {
       return TokenType.variable;
     }
 
-    RegExp dig = RegExp(r'\d+');
+    final RegExp dig = RegExp(r'\d+');
     if (dig.hasMatch(s)) {
       return TokenType.value;
     }

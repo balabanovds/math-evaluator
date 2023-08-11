@@ -1,18 +1,18 @@
-import 'package:MathEvaluator/token.dart';
+import 'token.dart';
 
 class Scanner {
+  Scanner(this._string);
+
   final String _string;
 
-  Scanner(this._string) {}
-
   List<Token> tokenize() {
-    List<Token> list = List.empty(growable: true);
+    final List<Token> list = List<Token>.empty(growable: true);
 
-    for (int i = 0; i < this._string.length; i++) {
-      Token currentToken = Token(this._string[i]);
+    for (int i = 0; i < _string.length; i++) {
+      final Token currentToken = Token(_string[i]);
 
       if (i > 0) {
-        var lastToken = list.last;
+        final Token lastToken = list.last;
         if (currentToken.canBeMultiChar() &&
             currentToken.type == lastToken.type) {
           lastToken.merge(currentToken);

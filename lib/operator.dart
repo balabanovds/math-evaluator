@@ -1,11 +1,12 @@
 import 'package:MathEvaluator/token.dart';
 
 class Operator {
+  Operator(TokenType typ) {
+    type = _parse(typ);
+  }
+
   late _OperatorType type;
 
-  Operator(TokenType typ) {
-    this.type = _parse(typ);
-  }
 
   int priority() {
     switch (type) {
@@ -37,8 +38,8 @@ class Operator {
     }
   }
 
-  bool isRbracket() {
-    return type == _OperatorType._rbr;
+  bool isLbracket() {
+    return type == _OperatorType._lbr;
   }
 
   _OperatorType _parse(TokenType typ) {

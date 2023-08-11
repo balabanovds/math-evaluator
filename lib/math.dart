@@ -1,29 +1,30 @@
-import 'package:MathEvaluator/operand.dart';
-import 'package:MathEvaluator/operator.dart';
-import 'package:MathEvaluator/postfix_notation.dart';
-import 'package:MathEvaluator/scanner.dart';
-import 'package:MathEvaluator/token.dart';
+import 'operand.dart';
+import 'operator.dart';
+import 'postfix_notation.dart';
+import 'scanner.dart';
+import 'stack.dart';
+import 'token.dart';
 
 class Math {
+  Math(this._expression);
+
   final String _expression;
 
-  Math(this._expression) {}
-
   double eval(Map<String, double> variables) {
-    var tokens = _tokenize();
+    final List<Token> tokens = _tokenize();
 
-    List<double> stack = List.empty(growable: true);
-    PostfixNotation(tokens).prepare(variables).forEach((e) {
+    final Stack<double> stack = Stack<double>();
+    PostfixNotation(tokens).prepare(variables).forEach((Object e) {
       if (e is Operand) {
-        stack.add(e.value());
+        stack.push(e.value());
         return;
       }
 
       if (e is Operator) {
-        var right = stack.removeLast();
-        var left = stack.removeLast();
+        final double right = stack.pop();
+        final double left = stack.pop();
 
-        stack.add(e.calculate(left, right));
+        stack.push(e.calculate(left, right));
       }
     });
 
@@ -31,7 +32,7 @@ class Math {
       throw Exception('invalid math expression');
     }
 
-    return stack[0];
+    return stack.pop();
   }
 
   List<Token> _tokenize() {

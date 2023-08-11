@@ -69,7 +69,7 @@ class Stack<T> {
 
   List<T> popAll() {
     final List<T> result = List<T>.empty(growable: true);
-    int len = _stack.length;
+    final int len = _stack.length;
     int counter = 0;
 
     while (counter < len) {
