@@ -26,6 +26,7 @@ void main() {
       _TestCase('10*5+4/2-1', '10*5+4/2-1', <String, double>{}, 51),
       _TestCase('(x*3-5)/5', '(x*3-5)/5', <String, double>{'x': 10}, 5),
       _TestCase('3*x+15/(3+2)', '3*x+15/(3+2)', <String, double>{'x': 10}, 33),
+      _TestCase('(3+x)-(-10+y)', '(3+x)-(-10+y)', <String, double>{'x': 10, 'y': 5}, 18),
     ];
 
     run(tests);
